@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>දෛනික වාර්තා පද්ධතිය</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Sinhala:wght@300;400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f14;
+    --surface: #161921;
+    --surface2: #1e2330;
+    --border: #2a3045;
+    --text: #e8ecf4;
+    --text-muted: #7a8499;
+
+    --cat1: #e84545;       /* විශේෂ සිදුවිම */
+    --cat1-soft: rgba(232,69,69,0.12);
+    --cat2: #f59e0b;       /* වාහන පරික්ෂා */
+    --cat2-soft: rgba(245,158,11,0.12);
+    --cat3: #3b82f6;       /* දේශන */
+    --cat3-soft: rgba(59,130,246,0.12);
+    --cat4: #a855f7;       /* නිනොනො */
+    --cat4-soft: rgba(168,85,247,0.12);
+    --cat5: #10b981;       /* සිරමැදිරි */
+    --cat5-soft: rgba(16,185,129,0.12);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans Sinhala', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ─── HEADER ─── */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  header h1 {
+    font-family: 'Noto Sans Sinhala', sans-serif;
+    font-weight: 700;
+    font-size: 1.1rem;
+    letter-spacing: 0.05em;
+    color: var(--text);
+  }
+  header .date-badge {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 0.35rem 1rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-family: 'Bebas Neue', sans-serif;
+    letter-spacing: 0.1em;
+  }
+
+  /* ─── TAB NAV ─── */
+  .tab-nav {
+    display: flex;
+    gap: 0;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+  }
+  .tab-btn {
+    background: none;
+    border: none;
+    padding: 1rem 1.5rem;
+    color: var(--text-muted);
+    font-family: 'Noto Sans Sinhala', sans-serif;
+    font-size: 0.88rem;
+    cursor: pointer;
+    position: relative;
+    transition: color 0.2s;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+  }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active {
+    color: var(--text);
+    border-bottom-color: #e84545;
+  }
+
+  /* ─── MAIN LAYOUT ─── */
+  .page { display: none; padding: 2rem; max-width: 1100px; margin: 0 auto; }
+  .page.active { display: block; }
+
+  /* ─── ENTRY FORM PAGE ─── */
+  .form-header {
+    margin-bottom: 2rem;
+  }
+  .form-header h2 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+  }
+  .form-header p { color: var(--text-muted); font-size: 0.85rem; }
+
+  .form-date-row {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .form-date-row label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-right: 0.5rem;
+  }
+  .form-date-row input[type="date"] {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-family: inherit;
+  }
+
+  /* ─── CATEGORY CARDS (FORM) ─── */
+  .cat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.2rem;
+  }
+
+  .cat-card {
+    background: var(--surface);
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    transition: border-color 0.2s, transform 0.15s;
+  }
+  .cat-card:hover { transform: translateY(-2px); }
+
+  .cat-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 1.2rem 0.8rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .cat-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .cat-card-header h3 {
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  .cat-card-body { padding: 1rem 1.2rem; }
+
+  .cat-card textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'Noto Sans Sinhala', sans-serif;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    padding: 0.75rem;
+    resize: vertical;
+    min-height: 100px;
+    transition: border-color 0.2s;
+    outline: none;
+  }
+  .cat-card textarea::placeholder { color: var(--text-muted); }
+  .cat-card.c1 textarea:focus { border-color: var(--cat1); }
+  .cat-card.c2 textarea:focus { border-color: var(--cat2); }
+  .cat-card.c3 textarea:focus { border-color: var(--cat3); }
+  .cat-card.c4 textarea:focus { border-color: var(--cat4); }
+  .cat-card.c5 textarea:focus { border-color: var(--cat5); }
+
+  .cat-card.c1 .cat-card-header { background: var(--cat1-soft); }
+  .cat-card.c2 .cat-card-header { background: var(--cat2-soft); }
+  .cat-card.c3 .cat-card-header { background: var(--cat3-soft); }
+  .cat-card.c4 .cat-card-header { background: var(--cat4-soft); }
+  .cat-card.c5 .cat-card-header { background: var(--cat5-soft); }
+
+  .cat-card.c1 .cat-dot { background: var(--cat1); box-shadow: 0 0 6px var(--cat1); }
+  .cat-card.c2 .cat-dot { background: var(--cat2); box-shadow: 0 0 6px var(--cat2); }
+  .cat-card.c3 .cat-dot { background: var(--cat3); box-shadow: 0 0 6px var(--cat3); }
+  .cat-card.c4 .cat-dot { background: var(--cat4); box-shadow: 0 0 6px var(--cat4); }
+  .cat-card.c5 .cat-dot { background: var(--cat5); box-shadow: 0 0 6px var(--cat5); }
+
+  /* ─── SAVE BUTTON ─── */
+  .save-row {
+    margin-top: 2rem;
+    display: flex;
+    justify-content: flex-end;
+  }
+  .btn-save {
+    background: linear-gradient(135deg, #e84545, #c41f1f);
+    color: #fff;
+    border: none;
+    padding: 0.8rem 2.5rem;
+    border-radius: 10px;
+    font-family: 'Noto Sans Sinhala', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+    letter-spacing: 0.03em;
+  }
+  .btn-save:hover { opacity: 0.9; transform: scale(1.02); }
+  .btn-save:active { transform: scale(0.98); }
+
+  /* ─── TOAST ─── */
+  .toast {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    background: #10b981;
+    color: #fff;
+    padding: 0.8rem 1.5rem;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.3s;
+    pointer-events: none;
+    z-index: 999;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+
+  /* ─── RECORDS PAGE ─── */
+  .records-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+  }
+  .records-toolbar h2 { font-size: 1.3rem; font-weight: 600; flex: 1; }
+  .search-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-family: 'Noto Sans Sinhala', sans-serif;
+    font-size: 0.85rem;
+    width: 220px;
+    outline: none;
+  }
+  .search-box:focus { border-color: #e84545; }
+
+  /* ─── RECORD CARDS ─── */
+  .records-list { display: flex; flex-direction: column; gap: 1.5rem; }
+
+  .record-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    animation: fadeUp 0.3s ease;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .record-date-header {
+    background: var(--surface2);
+    padding: 0.75rem 1.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+  .record-date-header .date-label {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.1rem;
+    letter-spacing: 0.1em;
+    color: var(--text);
+  }
+  .btn-delete {
+    background: rgba(232,69,69,0.15);
+    color: var(--cat1);
+    border: 1px solid rgba(232,69,69,0.3);
+    padding: 0.3rem 0.8rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    font-family: 'Noto Sans Sinhala', sans-serif;
+    transition: background 0.2s;
+  }
+  .btn-delete:hover { background: rgba(232,69,69,0.3); }
+
+  .record-cats {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 0;
+  }
+
+  .record-cat {
+    padding: 1rem 1.4rem;
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .record-cat:last-child { border-right: none; }
+
+  .record-cat-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+  .record-cat-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .record-cat-name {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+  .record-cat-text {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    line-height: 1.65;
+    white-space: pre-wrap;
+  }
+  .record-cat-empty {
+    font-size: 0.8rem;
+    color: #3a3f52;
+    font-style: italic;
+  }
+
+  /* color left-border per category */
+  .record-cat.c1 { border-left: 3px solid var(--cat1); background: var(--cat1-soft); }
+  .record-cat.c2 { border-left: 3px solid var(--cat2); background: var(--cat2-soft); }
+  .record-cat.c3 { border-left: 3px solid var(--cat3); background: var(--cat3-soft); }
+  .record-cat.c4 { border-left: 3px solid var(--cat4); background: var(--cat4-soft); }
+  .record-cat.c5 { border-left: 3px solid var(--cat5); background: var(--cat5-soft); }
+
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-muted);
+  }
+  .empty-state svg { opacity: 0.2; margin-bottom: 1rem; }
+  .empty-state p { font-size: 0.9rem; }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 600px) {
+    .page { padding: 1rem; }
+    .cat-grid { grid-template-columns: 1fr; }
+    .record-cats { grid-template-columns: 1fr; }
+    .tab-btn { padding: 0.9rem 0.8rem; font-size: 0.78rem; }
+    header h1 { font-size: 0.9rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📋 දෛනික වාර්තා පද්ධතිය</h1>
+  <div class="date-badge" id="liveDateBadge"></div>
+</header>
+
+<nav class="tab-nav">
+  <button class="tab-btn active" onclick="showTab('entry')">✏️ &nbsp;විස්තර ඇතුළත් කිරීම</button>
+  <button class="tab-btn" onclick="showTab('records')">📂 &nbsp;විස්තර දර්ශනය</button>
+</nav>
+
+<!-- ══════════ ENTRY PAGE ══════════ -->
+<div class="page active" id="page-entry">
+  <div class="form-header">
+    <h2>නව දෛනික වාර්තාව</h2>
+    <p>දිනයේ සිදු වූ ඇතුළත් කිරීම් අදාළ කොටු තුළ ලියන්න</p>
+  </div>
+
+  <div class="form-date-row">
+    <label>📅 දිනය:</label>
+    <input type="date" id="entryDate">
+  </div>
+
+  <div class="cat-grid">
+    <div class="cat-card c1">
+      <div class="cat-card-header">
+        <span class="cat-dot"></span>
+        <h3>විශේෂ සිදුවිම</h3>
+      </div>
+      <div class="cat-card-body">
+        <textarea id="cat1" placeholder="විශේෂ සිදුවීම් පිළිබඳ විස්තර ලියන්න…"></textarea>
+      </div>
+    </div>
+
+    <div class="cat-card c2">
+      <div class="cat-card-header">
+        <span class="cat-dot"></span>
+        <h3>වාහන පරික්ෂා කිරිම හා රිපෝර්තු</h3>
+      </div>
+      <div class="cat-card-body">
+        <textarea id="cat2" placeholder="වාහන පරික්ෂා කිරීම් හා වාර්තා ලියන්න…"></textarea>
+      </div>
+    </div>
+
+    <div class="cat-card c3">
+      <div class="cat-card-header">
+        <span class="cat-dot"></span>
+        <h3>දේශන</h3>
+      </div>
+      <div class="cat-card-body">
+        <textarea id="cat3" placeholder="දේශන සම්බන්ධ තොරතුරු ලියන්න…"></textarea>
+      </div>
+    </div>
+
+    <div class="cat-card c4">
+      <div class="cat-card-header">
+        <span class="cat-dot"></span>
+        <h3>නිනොනො අත්අඩංගුවට ගැනිම</h3>
+      </div>
+      <div class="cat-card-body">
+        <textarea id="cat4" placeholder="අත්අඩංගුවට ගැනීම් පිළිබඳ විස්තර ලියන්න…"></textarea>
+      </div>
+    </div>
+
+    <div class="cat-card c5">
+      <div class="cat-card-header">
+        <span class="cat-dot"></span>
+        <h3>සිරමැදිරි විස්තරය</h3>
+      </div>
+      <div class="cat-card-body">
+        <textarea id="cat5" placeholder="සිරමැදිරි සම්බන්ධ විස්තර ලියන්න…"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="save-row">
+    <button class="btn-save" onclick="saveEntry()">💾 &nbsp;වාර්තාව සුරකින්න</button>
+  </div>
+</div>
+
+<!-- ══════════ RECORDS PAGE ══════════ -->
+<div class="page" id="page-records">
+  <div class="records-toolbar">
+    <h2>සුරකින ලද වාර්තා</h2>
+    <input type="text" class="search-box" id="searchBox" placeholder="🔍 සොයන්න…" oninput="renderRecords()">
+  </div>
+  <div class="records-list" id="recordsList"></div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+const CATS = [
+  { id: 'cat1', cls: 'c1', label: 'විශේෂ සිදුවිම',                   color: '#e84545' },
+  { id: 'cat2', cls: 'c2', label: 'වාහන පරික්ෂා කිරිම හා රිපෝර්තු', color: '#f59e0b' },
+  { id: 'cat3', cls: 'c3', label: 'දේශන',                             color: '#3b82f6' },
+  { id: 'cat4', cls: 'c4', label: 'නිනොනො අත්අඩංගුවට ගැනිම',         color: '#a855f7' },
+  { id: 'cat5', cls: 'c5', label: 'සිරමැදිරි විස්තරය',               color: '#10b981' },
+];
+
+// Set today's date
+const today = new Date();
+document.getElementById('entryDate').value = today.toISOString().split('T')[0];
+document.getElementById('liveDateBadge').textContent =
+  today.toLocaleDateString('si-LK', { year:'numeric', month:'long', day:'numeric' });
+
+function showTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-'+tab).classList.add('active');
+  event.currentTarget.classList.add('active');
+  if (tab === 'records') renderRecords();
+}
+
+function getEntries() {
+  return JSON.parse(localStorage.getItem('dailyLog') || '[]');
+}
+function saveEntries(data) {
+  localStorage.setItem('dailyLog', JSON.stringify(data));
+}
+
+function saveEntry() {
+  const date = document.getElementById('entryDate').value;
+  if (!date) { showToast('📅 දිනය තෝරන්න!', '#e84545'); return; }
+
+  const entry = { date };
+  CATS.forEach(c => { entry[c.id] = document.getElementById(c.id).value.trim(); });
+
+  const entries = getEntries();
+  const idx = entries.findIndex(e => e.date === date);
+  if (idx >= 0) entries[idx] = entry; else entries.push(entry);
+  entries.sort((a,b) => b.date.localeCompare(a.date));
+  saveEntries(entries);
+
+  // clear form
+  CATS.forEach(c => { document.getElementById(c.id).value = ''; });
+  showToast('✅ වාර්තාව සාර්ථකව සුරකින ලදී!', '#10b981');
+}
+
+function renderRecords() {
+  const q = (document.getElementById('searchBox').value || '').toLowerCase();
+  const entries = getEntries().filter(e => {
+    if (!q) return true;
+    return e.date.includes(q) || CATS.some(c => (e[c.id]||'').toLowerCase().includes(q));
+  });
+
+  const list = document.getElementById('recordsList');
+  if (!entries.length) {
+    list.innerHTML = `<div class="empty-state">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M9 17H7A5 5 0 0 1 7 7h2"/><path d="M15 7h2a5 5 0 0 1 0 10h-2"/>
+        <line x1="8" y1="12" x2="16" y2="12"/>
+      </svg>
+      <p>සුරකින ලද වාර්තා නොමැත</p>
+    </div>`;
+    return;
+  }
+
+  list.innerHTML = entries.map(e => `
+    <div class="record-card">
+      <div class="record-date-header">
+        <span class="date-label">${formatDate(e.date)}</span>
+        <button class="btn-delete" onclick="deleteEntry('${e.date}')">🗑 මකන්න</button>
+      </div>
+      <div class="record-cats">
+        ${CATS.map(c => `
+          <div class="record-cat ${c.cls}">
+            <div class="record-cat-label">
+              <span class="record-cat-dot" style="background:${c.color};box-shadow:0 0 5px ${c.color}"></span>
+              <span class="record-cat-name" style="color:${c.color}">${c.label}</span>
+            </div>
+            ${e[c.id]
+              ? `<div class="record-cat-text">${escHtml(e[c.id])}</div>`
+              : `<div class="record-cat-empty">ඇතුළත් කිරීමක් නොමැත</div>`}
+          </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function deleteEntry(date) {
+  if (!confirm('මෙම වාර්තාව මකා දැමීමට අවශ්‍යද?')) return;
+  const entries = getEntries().filter(e => e.date !== date);
+  saveEntries(entries);
+  renderRecords();
+  showToast('🗑 වාර්තාව මකා දැමිණි', '#e84545');
+}
+
+function formatDate(d) {
+  const dt = new Date(d + 'T00:00:00');
+  return dt.toLocaleDateString('si-LK', { year:'numeric', month:'long', day:'numeric', weekday:'long' });
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+}
+
+function showToast(msg, bg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = bg || '#10b981';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+</script>
+</body>
+</html>
